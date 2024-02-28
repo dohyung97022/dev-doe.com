@@ -1,16 +1,19 @@
 <template>
   <div class="container-xxl">
-    <ViewTitle title="AWSLambdaClone" sub-title="Kubernetes 의 이해를 위해 aws lambda 의 내부 시스템을 추정, 구성한 프로젝트"/>
+    <ViewTitle title="Info" sub-title="lambda 를 조회합니다."/>
+    <LambdaInfo/>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import ViewTitle from "@/components/viewTitle/ViewTitle.vue";
+import LambdaInfo from "@/domain/lambda/components/LambdaInfo.vue";
 
 export default defineComponent({
-  name: 'LambdaView',
+  name: 'LambdaInfoView',
   components: {
+    LambdaInfo,
     ViewTitle,
   },
 });

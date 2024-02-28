@@ -12,7 +12,6 @@
 
     <h1>{{ this.title }}</h1>
     <h6 class="fw-light">{{ this.subTitle }}</h6>
-    <hr>
   </div>
 </template>
 

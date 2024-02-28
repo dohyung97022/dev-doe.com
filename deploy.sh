@@ -37,18 +37,20 @@ echo "{
 }" > bucket_policy.json
 
 # policy 적용
-aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy file://$PWD/bucket_policy.json
+aws s3api put-bucket-policy --bucket ${BUCKET_NAME} --policy "file://$PWD/bucket_policy.json"
 sed -i "" "s/${BUCKET_NAME}/${WWW_BUCKET_NAME}/g" bucket_policy.json
-aws s3api put-bucket-policy --bucket ${WWW_BUCKET_NAME} --policy file://$PWD/bucket_policy.json
+aws s3api put-bucket-policy --bucket ${WWW_BUCKET_NAME} --policy "file://$PWD/bucket_policy.json"
 
 # rm policy
 rm bucket_policy.json
 
 # 파일 업로드
-aws s3 sync ${FRONTEND_LOCATION} s3://${BUCKET_NAME}/
+echo uploading
+aws s3 sync ${FRONTEND_LOCATION} "s3://${BUCKET_NAME}/"
 
 # s3 website 적용
-aws s3 website s3://${BUCKET_NAME}/ --index-document index.html --error-document index.html
+echo setting website
+aws s3 website "s3://${BUCKET_NAME}/" --index-document index.html --error-document index.html
 
 # www bucket 은 redirect
 echo "{

@@ -1,6 +1,6 @@
 <template>
   <div class="container-xxl">
-    <ViewTitle title="집" sub-title="도형이의 아득한 집입니다. 편히 쉬다 가시죠."/>
+    <ViewTitle title="Home" sub-title="Home sweet home. May you be in peace."/>
   </div>
 </template>
 

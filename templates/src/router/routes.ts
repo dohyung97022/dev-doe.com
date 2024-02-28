@@ -7,7 +7,7 @@ const headerRoutes: Array<HeaderRouteRecord> = [
     routeRecord: {
       path: '/',
       name: 'dev-doe.com',
-      component: () => import('../views/HomeView.vue')
+      component: () => import('@/domain/home/view/HomeView.vue')
     },
     isDisplayed: true,
     isView: true
@@ -17,7 +17,7 @@ const headerRoutes: Array<HeaderRouteRecord> = [
     routeRecord: {
       path: '/lambda',
       name: 'lambda',
-      component: () => import('../views/lambda/LambdaView.vue')
+      component: () => import('@/domain/lambda/view/LambdaView.vue')
     },
     isDisplayed: true,
     isView: false
@@ -26,7 +26,7 @@ const headerRoutes: Array<HeaderRouteRecord> = [
     routeRecord: {
       path: '/lambda/about',
       name: 'about',
-      component: () => import('../views/lambda/LambdaView.vue')
+      component: () => import('@/domain/lambda/view/LambdaView.vue')
     },
     isDisplayed: true,
     isView: true
@@ -35,7 +35,25 @@ const headerRoutes: Array<HeaderRouteRecord> = [
     routeRecord: {
       path: '/lambda/list',
       name: 'list',
-      component: () => import('../views/lambda/LambdaListView.vue')
+      component: () => import('@/domain/lambda/view/LambdaListView.vue')
+    },
+    isDisplayed: true,
+    isView: true
+  },
+  {
+    routeRecord: {
+      path: '/lambda/info',
+      name: 'info',
+      component: () => import('@/domain/lambda/view/LambdaInfoView.vue')
+    },
+    isDisplayed: false,
+    isView: true
+  },
+  {
+    routeRecord: {
+      path: '/lambda/add',
+      name: 'add',
+      component: () => import('@/domain/lambda/view/LambdaAddView.vue')
     },
     isDisplayed: true,
     isView: true
