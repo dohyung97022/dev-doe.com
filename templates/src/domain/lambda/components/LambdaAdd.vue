@@ -86,7 +86,7 @@ export default defineComponent({
     },
 
     async reqRuntime() {
-      axios.get(this.lambdaEndpoint + "/runtimes")
+      axios.get(this.lambdaEndpoint + "/lambda/runtimes")
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);
