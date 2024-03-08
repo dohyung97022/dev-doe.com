@@ -12,10 +12,10 @@
       {{ this.lambda.runtime }} {{ this.lambda.version }}
     </button>
     <ul class="dropdown-menu" aria-labelledby="runtimeDropdown">
-      <li><a class="dropdown-item" v-on:click="this.lambda.set({runtime: 'golang', version: '1.22'})">golang 1.22</a>
-      </li>
-      <li><a class="dropdown-item" v-on:click="this.lambda.set({runtime: 'node', version: '20'})">node 20</a></li>
-      <li><a class="dropdown-item" v-on:click="this.lambda.set({runtime: 'python', version: '3.12'})">python 3.12</a>
+      <li v-for="runtime in this.runtimes" v-bind:key="runtime.runtime+runtime.version">
+        <a class="dropdown-item" v-on:click="this.lambda?.set({runtime: runtime.runtime, version: runtime.version})">
+          {{ runtime.runtime }} {{ runtime.version }}
+        </a>
       </li>
     </ul>
   </div>
@@ -28,27 +28,77 @@
 <script lang="ts">
 import {defineComponent} from "vue";
 import Lambda from "@/domain/lambda/model/Lambda";
+import axios from "axios";
+import router from "@/router/routes";
+import Runtime from "@/domain/lambda/model/Runtime";
 
 export default defineComponent({
   name: "LambdaAdd",
 
   data() {
     return {
-      // TODO: default lambda 규격 api 연결
-      lambda: new Lambda({runtime: "golang", version: "1.22"}) as Lambda,
+      lambda: new Lambda({}) as Lambda,
+      runtimes: new Array<Runtime>() as Array<Runtime>,
+      lambdaEndpoint: process.env.VUE_APP_LAMBDA_CLONE_API as string
     }
+  },
+
+  mounted() {
+    this.reqDefaultLambda();
+    this.reqRuntime();
   },
 
   methods: {
     async creteLambda() {
-      // TODO: 생성 api 연결
-      return
+      if (this.lambda.title == "") {
+        alert("Title 이 지정되지 않았습니다.");
+        return;
+      }
+      axios.post(this.lambdaEndpoint + "/lambda", this.lambda)
+          .then(res => {
+            if (res.status != 200) {
+              throw new Error(res.data);
+            }
+            router.push("/lambda/info?id=" + res.data);
+            alert('저장되었습니다.');
+          })
+          .catch(error => {
+            router.push("/lambda/about");
+            alert('오류가 발생하였습니다.' + error);
+            console.error(error);
+          })
     },
 
     async reqDefaultLambda() {
-      // TODO: default lambda 규격 api 연결
+      axios.get(this.lambdaEndpoint + "/lambda/default")
+          .then(res => {
+            if (res.status != 200) {
+              throw new Error(res.data);
+            }
+            this.lambda = new Lambda(res.data);
+            this.lambda.id = "";
+          }).catch(error => {
+            router.push("/lambda/about");
+            alert("오류가 발생하였습니다." + error);
+            console.error(error);
+      })
       return
-    }
+    },
+
+    async reqRuntime() {
+      axios.get(this.lambdaEndpoint + "/lambda/runtimes")
+          .then(res => {
+            if (res.status != 200) {
+              throw new Error(res.data);
+            }
+            this.runtimes = Runtime.getRuntimes(res.data.runtimes);
+          })
+          .catch(error => {
+            router.push("/lambda/about");
+            alert('오류가 발생하였습니다.' + error);
+            console.error(error);
+          })
+    },
   },
 })
 </script>

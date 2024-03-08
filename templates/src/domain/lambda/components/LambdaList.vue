@@ -4,17 +4,21 @@
       <h5 class="col-3 m-auto">Title</h5>
       <h5 class="col-2 m-auto">Runtime</h5>
       <h5 class="col-2 m-auto">Version</h5>
-      <h5 class="col-4 m-auto">Endpoint</h5>
+      <h5 class="col-4 m-auto">RegDate</h5>
       <div class="col-1 m-auto">
-        <router-link class="btn btn-primary" to="/lambda/add"><font-awesome-icon class="fa-solid" icon="plus"/></router-link>
+        <router-link class="btn btn-primary" to="/lambda/add">
+          <font-awesome-icon class="fa-solid" icon="plus"/>
+        </router-link>
       </div>
     </div>
     <hr>
     <div v-for="lambda in lambdas" v-bind:key="lambda.id" class="row">
-      <div class="col-3 m-auto fw-bold" v-on:click="navLambdaInfo(lambda)">{{ lambda.title }}</div>
+      <div class="col-3 m-auto fw-bold text-truncate" v-on:click="navLambdaInfo(lambda)">{{ lambda.title }}</div>
       <div class="col-2 m-auto" v-on:click="navLambdaInfo(lambda)">{{ lambda.runtime }}</div>
       <div class="col-2 m-auto" v-on:click="navLambdaInfo(lambda)">{{ lambda.version }}</div>
-      <a class="col-4 m-auto" :href="lambda.endpoint" target="_blank">{{ lambda.endpoint }}</a>
+      <a class="col-4 m-auto text-truncate" :href='lambdaEndpoint + "/lambda/endpoint/" + lambda.id' target="_blank">
+        {{ lambdaEndpoint + "/lambda/endpoint/" + lambda.id }}
+      </a>
       <div class="col-1 m-auto">
         <button class="btn btn-primary" v-on:click="reqDeleteLambda(lambda)">
           <font-awesome-icon class="fa-solid" icon="trash"/>
@@ -29,6 +33,7 @@
 import {defineComponent} from "vue";
 import Lambda from "@/domain/lambda/model/Lambda";
 import router from "@/router/routes";
+import axios from "axios";
 
 export default defineComponent({
   name: "LambdaList",
@@ -37,7 +42,8 @@ export default defineComponent({
 
   data() {
     return {
-      lambdas: [] as Array<Lambda>
+      lambdas: [] as Array<Lambda>,
+      lambdaEndpoint: process.env.VUE_APP_LAMBDA_CLONE_API as string
     }
   },
 
@@ -47,20 +53,34 @@ export default defineComponent({
 
   methods: {
     async reqLambdas() {
-      // TODO: 리스트 조회 api 호출
-      const lambda = new Lambda({
-        title: "lambda for testing",
-        id: "2lkyldi229354",
-        runtime: "golang",
-        version: "1.5",
-        endpoint: "https://api.doe-dev.com/2lkyldi229354"
-      });
-      this.lambdas.push(lambda);
+      axios.get(this.lambdaEndpoint + "/lambda/list")
+          .then(res => {
+            if (res.status != 200) {
+              throw new Error(res.data);
+            }
+            this.lambdas = Lambda.getLambdas(res.data.lambdas);
+          })
+          .catch(error => {
+            router.push("/lambda/about");
+            alert('오류가 발생하였습니다.' + error);
+            console.error(error);
+          })
     },
 
-    reqDeleteLambda(lambda: Lambda) {
-      // TODO: 삭제 api 호출
-      return
+    async reqDeleteLambda(lambda: Lambda) {
+      axios.delete(this.lambdaEndpoint + "/lambda", {"params": {"id": lambda.id}})
+          .then(res => {
+            if (res.status != 200) {
+              throw new Error(res.data);
+            }
+            router.go(0);
+            alert("삭제되었습니다.");
+          })
+          .catch(error => {
+            router.push("/lambda/about");
+            alert('오류가 발생하였습니다.' + error);
+            console.error(error);
+          })
     },
 
     navLambdaInfo(lambda: Lambda) {
