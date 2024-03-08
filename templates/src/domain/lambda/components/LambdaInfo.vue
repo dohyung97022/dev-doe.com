@@ -16,11 +16,11 @@
   <div class="btn-group row w-100 m-auto ps-sm-3 pe-sm-3 pt-3" role="group">
     <div class="btn btn-outline-secondary disabled col-3">Runtime</div>
     <button class="btn btn-primary dropdown-toggle col-9" type="button" id="runtimeDropdown" data-bs-toggle="dropdown">
-      {{ this.lambda?.runtime }} {{ this.lambda?.version }}
+      {{ this.editorRuntime.runtime }} {{ this.editorRuntime.version }}
     </button>
     <ul class="dropdown-menu" aria-labelledby="runtimeDropdown">
       <li v-for="runtime in this.runtimes" v-bind:key="runtime.runtime+runtime.version">
-        <a class="dropdown-item" v-on:click="this.lambda?.set({runtime: runtime.runtime, version: runtime.version})">
+        <a class="dropdown-item" v-on:click="this.editorRuntime.set({runtime: runtime.runtime, version: runtime.version})">
           {{ runtime.runtime }} {{ runtime.version }}
         </a>
       </li>
@@ -29,7 +29,7 @@
   <!-- endpoint -->
   <div class="btn-group row w-100 m-auto ps-sm-3 pe-sm-3 pt-3" role="group">
     <div class="btn btn-outline-secondary disabled col-3">Endpoint</div>
-    <a class="btn btn-outline-secondary col-9" :href="this.lambda?.endpoint" target="_blank">
+    <a class="btn btn-outline-secondary col-9 text-truncate" :href="this.lambda?.endpoint" target="_blank">
       {{ this.lambda?.endpoint }}
     </a>
   </div>
@@ -44,22 +44,21 @@ import {javascript} from "@codemirror/lang-javascript"
 import {python} from "@codemirror/lang-python"
 import {go} from "@codemirror/lang-go"
 import Runtime from "@/domain/lambda/model/Runtime";
-import runtime from "@/domain/lambda/model/Runtime";
+import axios from "axios";
+import router from "@/router/routes";
 
 export default defineComponent({
   name: "LambdaInfo",
-  computed: {
-    runtime() {
-      return runtime
-    }
-  },
 
   data() {
     return {
+      id: this.$route.query.id as string,
       lambda: undefined as Lambda | undefined,
       editor: undefined as EditorView | undefined,
+      editorRuntime: new Runtime({}) as Runtime,
       compartment: new Compartment() as Compartment,
       runtimes: new Array<Runtime>() as Array<Runtime>,
+      lambdaEndpoint: process.env.VUE_APP_LAMBDA_CLONE_API as string,
     }
   },
 
@@ -71,51 +70,51 @@ export default defineComponent({
   },
 
   watch: {
-    'lambda.runtime'(newVal: string, oldVal: string) {
-      if (newVal == undefined || newVal == oldVal) {
+    'editorRuntime.runtime'(newVal: string, oldVal: string) {
+      if (this.lambda == undefined || newVal == undefined || newVal == oldVal) {
         return;
       }
       this.setEditorLanguage(newVal);
-      this.setEditorCode('');
+      if (this.editorRuntime.runtime == this.lambda.runtime &&
+          this.editorRuntime.version == this.lambda.version) {
+        this.setEditorCode(this.lambda.code);
+      } else {
+        this.setEditorCode('');
+      }
     }
   },
 
   methods: {
     createEditor() {
-      const parent = document.getElementById('editor')
+      const parent = document.getElementById('editor');
       if (!parent) {
-        console.error("document.getElementById('editor') is not found.")
-        return
+        console.error("document.getElementById('editor') is not found.");
+        return;
       }
       this.editor = new EditorView({
         extensions: [basicSetup, this.compartment.of(python())],
         parent: parent,
-
       })
     },
 
     setEditorStyle() {
-      const elements = document.getElementsByClassName('cm-editor')
-      const editorElement = elements[0] as HTMLElement
-      editorElement.style.height = "100%"
+      const elements = document.getElementsByClassName('cm-editor');
+      const editorElement = elements[0] as HTMLElement;
+      editorElement.style.height = "100%";
     },
 
     setEditorLanguage(runtime: string) {
-      // TODO: refactoring
-      let runtimeFunc;
-      if (runtime == 'node') {
-        runtimeFunc = javascript;
+      if (this.editor == undefined) {
+        console.error("editor is not created.");
+      } else if (runtime == 'node') {
+        this.editor?.dispatch({effects: this.compartment.reconfigure(javascript())});
       } else if (runtime == 'python') {
-        runtimeFunc = python;
+        this.editor?.dispatch({effects: this.compartment.reconfigure(python())});
       } else if (runtime == 'golang') {
-        runtimeFunc = go;
+        this.editor?.dispatch({effects: this.compartment.reconfigure(go())});
       } else {
-        console.error("parameter runtime did not match codemirror type.")
-        return
+        console.error("parameter runtime did not match codemirror type.");
       }
-      this.editor?.dispatch({
-        effects: this.compartment.reconfigure(runtimeFunc())
-      });
     },
 
     setEditorCode(code: string) {
@@ -129,33 +128,67 @@ export default defineComponent({
     },
 
     async reqLambda() {
-      // TODO: 조회 api 연결
-      this.lambda = new Lambda({
-        title: "lambda for testing",
-        id: "2lkyldi229354",
-        runtime: "node",
-        version: "1.5",
-        endpoint: "https://api.doe-dev.com/2lkyldi229354",
-        code: "",
-      });
+      axios.get(this.lambdaEndpoint + "/lambda", {"params": {"id": this.id}})
+          .then(res => {
+            if (res.status != 200) {
+              throw new Error(res.data);
+            }
+            this.lambda = new Lambda(res.data);
+            this.lambda.endpoint = this.lambdaEndpoint + "/lambda/endpoint/" + this.lambda.id;
+            this.setEditorCode(this.lambda.code);
+            this.editorRuntime.set({runtime: this.lambda.runtime, version: this.lambda.version})
+          })
+          .catch(error => {
+            router.push("/lambda/about");
+            alert('오류가 발생하였습니다.' + error);
+            console.error(error);
+          })
     },
 
     async reqRuntime() {
-      // TODO: runtime api 조회
-      this.runtimes.push(new Runtime({runtime:"golang", version: "1.22"}))
-      this.runtimes.push(new Runtime({runtime:"node", version: "20"}))
-      this.runtimes.push(new Runtime({runtime:"python", version: "3.12"}))
-      return
+      axios.get(this.lambdaEndpoint + "/runtimes")
+          .then(res => {
+            if (res.status != 200) {
+              throw new Error(res.data);
+            }
+            this.runtimes = Runtime.getRuntimes(res.data.runtimes);
+          })
+          .catch(error => {
+            router.push("/lambda/about");
+            alert('오류가 발생하였습니다.' + error);
+            console.error(error);
+          })
     },
 
     testLambda() {
       // TODO: 테스트 api 연결
-      return
+      return;
     },
 
-    saveLambda() {
-      // TODO: 저장 api 연결
-      return
+    async saveLambda() {
+      if (this.lambda == undefined) {
+        alert('lambda 가 조회되지 않았습니다.');
+        return
+      } else if (this.editor?.state.doc == undefined || this.editor?.state.doc.toString() == "") {
+        alert('code 가 없습니다.');
+        return
+      }
+      this.lambda.runtime = this.editorRuntime.runtime
+      this.lambda.version = this.editorRuntime.version
+      this.lambda.code = this.editor?.state.doc.toString()
+      axios.patch(this.lambdaEndpoint + "/lambda", this.lambda)
+          .then(res => {
+            if (res.status != 200) {
+              throw new Error(res.data);
+            }
+            router.go(0);
+            alert('저장되었습니다.');
+          })
+          .catch(error => {
+            router.push("/lambda/about");
+            alert('오류가 발생하였습니다.' + error);
+            console.error(error);
+          })
     }
   },
 })

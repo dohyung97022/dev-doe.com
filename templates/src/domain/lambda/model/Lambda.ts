@@ -15,6 +15,14 @@ class Lambda {
         this.code = param.code ?? ''
     }
 
+    static getLambdas(param: Array<Partial<Lambda>>) {
+        const lambdas = Array<Lambda>();
+        for (const partial of param) {
+            lambdas.push(new Lambda(partial));
+        }
+        return lambdas;
+    }
+
     set(param: Partial<Lambda>) {
         Object.assign(this, param);
     }
