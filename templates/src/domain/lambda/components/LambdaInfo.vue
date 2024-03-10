@@ -63,6 +63,7 @@ export default defineComponent({
   },
 
   mounted() {
+    this.deleteEditor();
     this.createEditor();
     this.setEditorStyle();
     this.reqLambda();
@@ -95,6 +96,13 @@ export default defineComponent({
         extensions: [basicSetup, this.compartment.of(python())],
         parent: parent,
       })
+    },
+
+    deleteEditor() {
+      const elements = document.getElementsByClassName('cm-editor');
+      for (const element of elements) {
+        element.remove();
+      }
     },
 
     setEditorStyle() {
