@@ -3,7 +3,6 @@
   <div class="row" v-if="lambda != undefined">
     <h3 class="col-9 ps-sm-4 m-auto">{{ lambda.title }}</h3>
     <div class="col-3 d-flex flex-nowrap justify-content-end">
-      <button class="btn-primary btn me-3" v-on:click="testLambda">test</button>
       <button class="btn-primary btn me-sm-4">
         <font-awesome-icon class="fa-solid" icon="floppy-disk" v-on:click="saveLambda"/>
       </button>
@@ -20,7 +19,8 @@
     </button>
     <ul class="dropdown-menu" aria-labelledby="runtimeDropdown">
       <li v-for="runtime in this.runtimes" v-bind:key="runtime.runtime+runtime.version">
-        <a class="dropdown-item" v-on:click="this.editorRuntime.set({runtime: runtime.runtime, version: runtime.version})">
+        <a class="dropdown-item"
+           v-on:click="this.editorRuntime.set({runtime: runtime.runtime, version: runtime.version})">
           {{ runtime.runtime }} {{ runtime.version }}
         </a>
       </li>
@@ -58,7 +58,8 @@ export default defineComponent({
       editorRuntime: new Runtime({}) as Runtime,
       compartment: new Compartment() as Compartment,
       runtimes: new Array<Runtime>() as Array<Runtime>,
-      lambdaEndpoint: process.env.VUE_APP_LAMBDA_CLONE_API as string,
+      lambdaApi: process.env.VUE_APP_LAMBDA_CLONE_API as string,
+      lambdaEndpointApi: process.env.VUE_APP_LAMBDA_CLONE_ENDPOINT_API as string,
     }
   },
 
@@ -80,7 +81,10 @@ export default defineComponent({
           this.editorRuntime.version == this.lambda.version) {
         this.setEditorCode(this.lambda.code);
       } else {
-        this.setEditorCode('');
+        const runtime_match = this.runtimes.filter(runtime =>
+            runtime.version == this.editorRuntime.version &&
+            runtime.runtime == this.editorRuntime.runtime)
+        this.setEditorCode(runtime_match[0].default_code);
       }
     }
   },
@@ -136,13 +140,13 @@ export default defineComponent({
     },
 
     async reqLambda() {
-      axios.get(this.lambdaEndpoint + "/lambda", {"params": {"id": this.id}})
+      axios.get(this.lambdaApi + "/lambda", {"params": {"id": this.id}})
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);
             }
             this.lambda = new Lambda(res.data);
-            this.lambda.endpoint = this.lambdaEndpoint + "/lambda/endpoint/" + this.lambda.id;
+            this.lambda.endpoint = this.lambdaEndpointApi + "/endpoint/" + this.lambda.id;
             this.setEditorCode(this.lambda.code);
             this.editorRuntime.set({runtime: this.lambda.runtime, version: this.lambda.version})
           })
@@ -154,7 +158,7 @@ export default defineComponent({
     },
 
     async reqRuntime() {
-      axios.get(this.lambdaEndpoint + "/lambda/runtimes")
+      axios.get(this.lambdaApi + "/lambda/runtimes")
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);
@@ -168,12 +172,7 @@ export default defineComponent({
           })
     },
 
-    testLambda() {
-      // TODO: 테스트 api 연결
-      return;
-    },
-
-    async saveLambda() {
+    saveLambda() {
       if (this.lambda == undefined) {
         alert('lambda 가 조회되지 않았습니다.');
         return
@@ -184,7 +183,7 @@ export default defineComponent({
       this.lambda.runtime = this.editorRuntime.runtime
       this.lambda.version = this.editorRuntime.version
       this.lambda.code = this.editor?.state.doc.toString()
-      axios.patch(this.lambdaEndpoint + "/lambda", this.lambda)
+      axios.patch(this.lambdaApi + "/lambda", this.lambda)
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);
