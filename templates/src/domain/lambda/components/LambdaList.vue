@@ -16,8 +16,8 @@
       <div class="col-3 m-auto fw-bold text-truncate" v-on:click="navLambdaInfo(lambda)">{{ lambda.title }}</div>
       <div class="col-2 m-auto" v-on:click="navLambdaInfo(lambda)">{{ lambda.runtime }}</div>
       <div class="col-2 m-auto" v-on:click="navLambdaInfo(lambda)">{{ lambda.version }}</div>
-      <a class="col-4 m-auto text-truncate" :href='lambdaEndpoint + "/lambda/endpoint/" + lambda.id' target="_blank">
-        {{ lambdaEndpoint + "/lambda/endpoint/" + lambda.id }}
+      <a class="col-4 m-auto text-truncate" :href='lambdaEndpointApi + "/endpoint/" + lambda.id' target="_blank">
+        {{ lambdaEndpointApi + "/endpoint/" + lambda.id }}
       </a>
       <div class="col-1 m-auto">
         <button class="btn btn-primary" v-on:click="reqDeleteLambda(lambda)">
@@ -43,7 +43,8 @@ export default defineComponent({
   data() {
     return {
       lambdas: [] as Array<Lambda>,
-      lambdaEndpoint: process.env.VUE_APP_LAMBDA_CLONE_API as string
+      lambdaApi: process.env.VUE_APP_LAMBDA_CLONE_API as string,
+      lambdaEndpointApi: process.env.VUE_APP_LAMBDA_CLONE_ENDPOINT_API as string
     }
   },
 
@@ -53,7 +54,7 @@ export default defineComponent({
 
   methods: {
     async reqLambdas() {
-      axios.get(this.lambdaEndpoint + "/lambda/list")
+      axios.get(this.lambdaApi + "/lambda/list")
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);
@@ -68,7 +69,7 @@ export default defineComponent({
     },
 
     async reqDeleteLambda(lambda: Lambda) {
-      axios.delete(this.lambdaEndpoint + "/lambda", {"params": {"id": lambda.id}})
+      axios.delete(this.lambdaApi + "/lambda", {"params": {"id": lambda.id}})
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);

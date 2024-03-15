@@ -39,22 +39,38 @@ export default defineComponent({
     return {
       lambda: new Lambda({}) as Lambda,
       runtimes: new Array<Runtime>() as Array<Runtime>,
-      lambdaEndpoint: process.env.VUE_APP_LAMBDA_CLONE_API as string
+      lambdaApi: process.env.VUE_APP_LAMBDA_CLONE_API as string
     }
   },
 
   mounted() {
-    this.reqDefaultLambda();
     this.reqRuntime();
+    this.reqDefaultLambda();
   },
 
   methods: {
+    setDefaultCode() {
+      if (this.runtimes.length == 0 ||
+          this.lambda.version == undefined ||
+          this.lambda.runtime == undefined) {
+        return
+      }
+      const match = this.runtimes.filter(runtime =>
+          runtime.runtime == this.lambda.runtime &&
+          runtime.version == this.lambda.version)
+      if (match.length <= 0) {
+        console.error("runtime match is not found")
+      }
+      this.lambda.code = match[0].default_code
+    },
+
     async creteLambda() {
-      if (this.lambda.title == "") {
-        alert("Title 이 지정되지 않았습니다.");
+      this.setDefaultCode();
+      if (this.lambda.title == "" || this.lambda.code == "") {
+        alert("Title 또는 code 이 지정되지 않았습니다.");
         return;
       }
-      axios.post(this.lambdaEndpoint + "/lambda", this.lambda)
+      axios.post(this.lambdaApi + "/lambda", this.lambda)
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);
@@ -70,7 +86,7 @@ export default defineComponent({
     },
 
     async reqDefaultLambda() {
-      axios.get(this.lambdaEndpoint + "/lambda/default")
+      axios.get(this.lambdaApi + "/lambda/default")
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);
@@ -86,7 +102,7 @@ export default defineComponent({
     },
 
     async reqRuntime() {
-      axios.get(this.lambdaEndpoint + "/lambda/runtimes")
+      axios.get(this.lambdaApi + "/lambda/runtimes")
           .then(res => {
             if (res.status != 200) {
               throw new Error(res.data);
