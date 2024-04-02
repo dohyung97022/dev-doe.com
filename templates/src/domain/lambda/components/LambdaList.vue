@@ -4,7 +4,7 @@
       <h5 class="col-3 m-auto">Title</h5>
       <h5 class="col-2 m-auto">Runtime</h5>
       <h5 class="col-2 m-auto">Version</h5>
-      <h5 class="col-4 m-auto">RegDate</h5>
+      <h5 class="col-4 m-auto">Endpoint</h5>
       <div class="col-1 m-auto">
         <router-link class="btn btn-primary" to="/lambda/add">
           <font-awesome-icon class="fa-solid" icon="plus"/>
