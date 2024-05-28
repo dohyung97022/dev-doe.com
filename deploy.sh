@@ -65,5 +65,8 @@ rm redirect_policy.json
 # 엔드포인트
 echo https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/index.html
 
+# cloudfront cache 제거
+aws cloudfront create-invalidation --distribution-id=E37Z2WXAZJQLXP --paths /
+
 # certificate, cloudfront, route53 should be manually configured
 # https://www.youtube.com/watch?v=mls8tiiI3uc
