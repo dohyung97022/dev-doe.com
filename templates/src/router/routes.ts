@@ -13,51 +13,6 @@ const headerRoutes: Array<HeaderRouteRecord> = [
     isView: true
 
   },
-  {
-    routeRecord: {
-      path: '/lambda',
-      name: 'lambda',
-      component: () => import('@/domain/lambda/view/LambdaView.vue')
-    },
-    isDisplayed: true,
-    isView: false
-  },
-  {
-    routeRecord: {
-      path: '/lambda/about',
-      name: 'about',
-      component: () => import('@/domain/lambda/view/LambdaView.vue')
-    },
-    isDisplayed: true,
-    isView: true
-  },
-  {
-    routeRecord: {
-      path: '/lambda/list',
-      name: 'list',
-      component: () => import('@/domain/lambda/view/LambdaListView.vue')
-    },
-    isDisplayed: true,
-    isView: true
-  },
-  {
-    routeRecord: {
-      path: '/lambda/info',
-      name: 'info',
-      component: () => import('@/domain/lambda/view/LambdaInfoView.vue')
-    },
-    isDisplayed: false,
-    isView: true
-  },
-  {
-    routeRecord: {
-      path: '/lambda/add',
-      name: 'add',
-      component: () => import('@/domain/lambda/view/LambdaAddView.vue')
-    },
-    isDisplayed: true,
-    isView: true
-  },
 ]
 
 function headerRoutesToHeader(): Header {
